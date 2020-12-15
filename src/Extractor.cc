@@ -31,8 +31,10 @@ namespace PED_CAL
     mBg_model->apply(img, foreground);
     cv::threshold(foreground, foreground, 200, 255, cv::THRESH_BINARY);
     //adaptiveThreshold(foreground,foreground,255,ADAPTIVE_THRESH_MEAN_C,THRESH_BINARY_INV,21, 20);
-    morphologyEx(foreground, foreground, MORPH_CLOSE, element); // Remove Noise
-    morphologyEx(foreground, foreground, MORPH_OPEN, element);  // Connect Inliers
+    morphologyEx(foreground, foreground, MORPH_OPEN, element);  // Remove Noise
+    morphologyEx(foreground, foreground, MORPH_CLOSE, element); // Connect Inliers
+    morphologyEx(foreground, foreground, MORPH_DILATE, element); // Connect Inliers
+    morphologyEx(foreground, foreground, MORPH_DILATE, element); // Connect Inliers
   }
 
   void PostureExtractor::LabelPed()
@@ -89,13 +91,15 @@ namespace PED_CAL
 
     //Find contour
     std::vector<std::vector<Point>> contours;
-    Mat matContour=Mat::zeros(width,height,CV_8UC3);
+    Mat matContour=Mat::zeros(foreground.rows, foreground.cols,foreground.type());
     findContours(foreground, contours, RETR_LIST, CHAIN_APPROX_NONE);
+    std::cout<<"# of contours = " << contours.size() << std::endl;
     for(size_t i=0; i<contours.size(); i++)
     {
+      std::cout <<i<< "-th contour length = " << contours[i].size()<<std::endl;
       double area = contourArea(contours[i]);
       if(area < 1e2 || 1e5 < area) continue;
-      drawContours(matContour, contours, static_cast<int>(i), Scalar(0, 0, 255), 2);
+      drawContours(matContour, contours, static_cast<int>(i), Scalar(255, 255, 255), 1);
     }
     imshow("contour", matContour);
 

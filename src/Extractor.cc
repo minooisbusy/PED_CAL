@@ -245,7 +245,8 @@ namespace PED_CAL
     }
     cv::imshow("result", color);
     waitKey(1);
-    return Posture(head,foot,0.0, tilt);
+    double mag = cv::norm(head-foot);
+    return Posture(head,foot,tilt, mag);
   }
 
   void PostureExtractor::drawAxis(Mat &img, Point p, Point& q, Scalar colour, const float scale = 0.2)

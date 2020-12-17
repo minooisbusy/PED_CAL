@@ -23,7 +23,6 @@ namespace PED_CAL
       output[i]=data[i].foot;
       input[i]=data[i].head;
     }
-
     return cv::findHomography(input,output);
   }
   Mat Estimator::EstimateFundamental()
@@ -51,6 +50,7 @@ namespace PED_CAL
     // modeling
     // reprojection error
     // optimize
+    return Mat();
   }
   void Estimator::EstTwoVP(const Posture& A, const Posture& B, Point3d& EastVP, Point3d& VertVP)
 {
@@ -69,6 +69,14 @@ Vec3d CrossProduct(Vec3d a, Vec3d b)
 	output[0] = a[1] * b[2] - a[2] * b[1];
 	output[1] = a[2] * b[0] - a[0] * b[2];
 	output[2] = a[0] * b[1] - a[1] * b[0];
+	return output;
+}
+Point3d CrossProduct(Point3d a,Point3d b)
+{
+	Point3d output;
+	output.x = a.y * b.z - a.z * b.y;
+	output.y = a.z * b.x - a.x * b.z;
+	output.z = a.x * b.y - a.y * b.x;
 	return output;
 }
 
@@ -183,6 +191,83 @@ double DotProduct(Vec3d a, Vec3d b)
 }
 
 
+double computeError(const Mat& H, const std::vector<Posture>& pos)
+{
+  double res = 0;
+  int inliers =0;
+  for(int i=0; i<pos.size();i++)
+  {
+			cv::Point2d p;
+			const int x = pos[i].head.x; const int y = pos[i].head.y;
+			const double den = H.at<double>(2,0)+ H.at<double>(2,1) + H.at<double>(2,2);
+			p.x = (H.at<double>(0,0)*x + H.at<double>(0,1)*y + H.at<double>(0,2))/den;
+			p.y = (H.at<double>(1,0)*x + H.at<double>(1,1)*y + H.at<double>(1,2))/den;
+      const Point2d q = pos[i].foot;
+      double value =  cv::norm(q-p);
+      if(value<50)
+      {
+        res += value;
+        inliers++;
+      }
+
+  }
+  if(inliers==0)inliers=1;
+  return res/(double)inliers;
+}
+
+Mat EstProj(const Mat &H, int width, int height)
+{
+  Point3d fleft(width/3, height/3,1);
+  Point3d fright(width*2/3, height/3,1);
+  Point3d fbottom(width/2, height*2/3, 1);
+
+  Point3d hleft = operation(H,fleft);
+  Point3d hright = operation(H,fright);
+  Point3d hbottom = operation(H,fbottom);
+
+  Point3d line1 = CrossProduct(hleft, hright);
+  Point3d line2 = CrossProduct(hleft, hbottom);
+  Point3d line3 = CrossProduct(hright, hbottom);
+
+  Point3d vpleft = CrossProduct(line1,line2);
+  Point3d vpright = CrossProduct(line2,line3);
+  Point3d vpbottom = CrossProduct(line1,line3);
+
+  Mat P=Mat::zeros(3,4,CV_64FC1);
+  P.at<double>(0,0) = vpleft.x;
+  P.at<double>(1,0) = vpleft.x;
+  P.at<double>(2,0) = vpleft.x;
+
+  P.at<double>(0,1) = vpright.x;
+  P.at<double>(1,1) = vpright.x;
+  P.at<double>(2,1) = vpright.x;
+
+  P.at<double>(0,2) = vpbottom.x;
+  P.at<double>(1,2) = vpbottom.x;
+  P.at<double>(2,2) = vpbottom.x;
+  Mat KR = P(Range(0,3),Range(0,3));
+
+  Mat K;
+  Mat KKT = KR*KR.t();
+  //cv::Cholesky(KKT.ptr(),KKT.step1(),3,NULL)
+
+
+ // Point3d hleft = H*fleft;
+  return Mat();
+
+
+}
+
+Point3d operation(const Mat& H, Point3d v)
+{
+			Point3d p;
+			const int x = v.x; const int y = v.y;
+			const double den = H.at<double>(2,0)*x+ H.at<double>(2,1)*y + H.at<double>(2,2);
+			p.x = (H.at<double>(0,0)*x + H.at<double>(0,1)*y + H.at<double>(0,2))/den;
+			p.y = (H.at<double>(1,0)*x + H.at<double>(1,1)*y + H.at<double>(1,2))/den;
+      p.z = 1;
+    return p;
+}
 
 
 }

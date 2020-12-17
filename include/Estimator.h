@@ -25,5 +25,14 @@ public:
   Mat Estimate();
   void EstTwoVP(const Posture& A, const Posture& B, Point3d& EastVP, Point3d& VertVP);
 };
+Vec3d CrossProduct(Vec3d,Vec3d);
+Point3d CrossProduct(Point3d,Point3d);
+double EstFocalFromTwoVP(Vec3d Fu, Vec3d Fv, Size A);
+Mat EstRotationFromTwoVP2(Vec3d Fu, Vec3d Fv, double Focal, Point pp);
+Mat EstRotationFromTwoVP(Vec3d Fu, Vec3d Fv, double Focal, Point pp);
+double DotProduct(Vec3d a, Vec3d b);
+double computeError(const Mat& H, const std::vector<Posture>& pos);
+Mat EstProj(const Mat &H);
+Point3d operation(const Mat& H, Point3d v);
 }
 #endif

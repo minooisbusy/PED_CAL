@@ -17,9 +17,9 @@ bool cmp(const PED_CAL::Posture& v1, const PED_CAL::Posture& v2)
 return v1.ratio>v2.ratio;
 
 }
-
 int main(int argc, char** argv)
 {
+	bool first =true;
 	char key='n';
 	cv::Ptr<VideoCapture> cap;// = new cv::VideoCapture();
 	if(argc<2)
@@ -119,8 +119,10 @@ int main(int argc, char** argv)
 		pd.clear();
 		imshow("image", pImg);
 		key = waitKey(1);
-		if(key =='s')
-		waitKey(0);
+		if(first)
+		{
+			first = false;
+		}
 	}
 	waitKey(0);
 
